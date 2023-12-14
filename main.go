@@ -5,18 +5,48 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
 )
 
+const prefix = ":alvin"
+
 func main() {
-	sess, err := discordgo.New("Bot MTE4NDUyMjM3Njc4MDcxNDEyNA.GgLv1P.oM1D_jRTDi1Zul0r_TCBMePanLviQ7cd_5mP7I")
+	sess, err := discordgo.New("Bot ")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	sess.AddHandler(hello)
+	sess.AddHandler(func(session *discordgo.Session, message *discordgo.MessageCreate) {
+		if message.Author.ID == session.State.User.ID {
+			return
+		}
+
+		args := strings.Split(message.Content, " ")
+
+		if args[0] != prefix {
+			return
+		}
+
+		if args[1] == "hello" {
+			session.ChannelMessageSend(message.ChannelID, "Hello "+message.Author.Username+", this is Alvin Beta. My days are numbered, I walk so other future Alvins can run.")
+		}
+
+		if args[1] == "weather" {
+
+			if len(args) == 3 {
+				if args[2] == "?" {
+					session.ChannelMessageSend(message.ChannelID, "To give you an hourly weather forecast I will be utilizing the Tomorrow.io API (https://www.tomorrow.io/). Check out my progress at https://github.com/NickGroveSE/Alvin")
+				}
+			} else {
+				session.ChannelMessageSend(message.ChannelID, "My Weather Functionality is Under Development. Type the command ':alvin weather ?' to learn more!")
+			}
+
+		}
+	})
+
 	sess.AddHandler(welcome)
 
 	sess.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
@@ -33,18 +63,6 @@ func main() {
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
-}
-
-// func boot
-
-func hello(session *discordgo.Session, message *discordgo.MessageCreate) {
-	if message.Author.ID == session.State.User.ID {
-		return
-	}
-
-	if message.Content == "Hi Alvin" {
-		session.ChannelMessageSend(message.ChannelID, "Hello "+message.Author.Username+", this is Alvin Beta. My days are numbered, I walk so other future Alvins can run. Do not let the dark and evil entities of this world consume you.")
-	}
 }
 
 func welcome(session *discordgo.Session, message *discordgo.GuildMemberAdd) {
