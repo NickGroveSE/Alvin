@@ -90,49 +90,99 @@ func main() {
 			return
 		}
 
-		if args[1] == "hello" {
+		switch instruction := args[1]; instruction {
+
+		case "hello":
 			session.ChannelMessageSend(message.ChannelID, "Hello "+message.Author.Username+", this is Alvin Beta. My days are numbered, I walk so other future Alvins can run.")
-		}
 
-		if args[1] == "weather" {
+		case "weather":
+			if len(args) <= 2 {
+				session.ChannelMessageSend(message.ChannelID, "You need to give me something to lookup. For example try sending ':alvin weather New York'.")
+			} else if len(args) >= 3 {
 
-			url := "https://api.tomorrow.io/v4/weather/realtime?location=cincinnati&units=imperial&apikey="
-			req, err := http.NewRequest("GET", url, nil)
-			if err != nil {
-				log.Fatal(err)
-			}
+				weatherCommand := args[2:]
+				city := strings.ToLower(strings.Join([]string(weatherCommand), "%20"))
 
-			req.Header.Add("accept", "application/json")
-
-			res, err := http.DefaultClient.Do(req)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			defer res.Body.Close()
-			body, _ := io.ReadAll(res.Body)
-
-			var weather WeatherData
-
-			if err := json.Unmarshal([]byte(body), &weather); err != nil {
-				log.Fatal(err)
-			}
-
-			weatherMessage := fmt.Sprintf("In your area, the temperature outside is **%.0f F** and it feels like **%.0f F**.\nCurrently you are experiencing **%v**", weather.Data.Values.Temperature, weather.Data.Values.TemperatureApparent, weatherCodes[weather.Data.Values.WeatherCode])
-
-			if weather.Data.Values.WeatherCode <= 1001 {
-				weatherMessage = weatherMessage + " conditions."
-			}
-
-			if len(args) == 3 {
-				if args[2] == "?" {
-					session.ChannelMessageSend(message.ChannelID, "To give you an hourly weather forecast I will be utilizing the Tomorrow.io API (https://www.tomorrow.io/). Check out my progress at https://github.com/NickGroveSE/Alvin")
+				url := "https://api.tomorrow.io/v4/weather/realtime?location=" + city + "&units=imperial&apikey="
+				req, err := http.NewRequest("GET", url, nil)
+				if err != nil {
+					log.Fatal(err)
 				}
-			} else {
+
+				req.Header.Add("accept", "application/json")
+
+				res, err := http.DefaultClient.Do(req)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				defer res.Body.Close()
+				body, _ := io.ReadAll(res.Body)
+
+				var weather WeatherData
+
+				if err := json.Unmarshal([]byte(body), &weather); err != nil {
+					log.Fatal(err)
+				}
+
+				weatherMessage := fmt.Sprintf("In your area, the temperature outside is **%.0f F** and it feels like **%.0f F**.\nCurrently you are experiencing **%v**", weather.Data.Values.Temperature, weather.Data.Values.TemperatureApparent, weatherCodes[weather.Data.Values.WeatherCode])
+
+				if weather.Data.Values.WeatherCode <= 1001 {
+					weatherMessage = weatherMessage + " conditions."
+				}
+
 				session.ChannelMessageSend(message.ChannelID, weatherMessage)
 			}
 
 		}
+
+		// if args[1] == "hello" {
+		// 	session.ChannelMessageSend(message.ChannelID, "Hello "+message.Author.Username+", this is Alvin Beta. My days are numbered, I walk so other future Alvins can run.")
+		// }
+
+		// if args[1] == "weather" {
+
+		// 	if len(args) <= 2 {
+		// 		session.ChannelMessageSend(message.ChannelID, "You need to give me something to lookup. For example try sending ':alvin weather New York'.")
+		// 	} else if len(args) >= 3 {
+
+		// 		weatherCommand := args[2:]
+		// 		city := strings.ToLower(strings.Join([]string(weatherCommand), "%20"))
+
+		// 		fmt.Println(city)
+
+		// 		url := "https://api.tomorrow.io/v4/weather/realtime?location=" + city + "&units=imperial&apikey=4SfUp3RmyXL4DnP4WP6yMBMzQN952jbh"
+		// 		req, err := http.NewRequest("GET", url, nil)
+		// 		if err != nil {
+		// 			log.Fatal(err)
+		// 		}
+
+		// 		req.Header.Add("accept", "application/json")
+
+		// 		res, err := http.DefaultClient.Do(req)
+		// 		if err != nil {
+		// 			log.Fatal(err)
+		// 		}
+
+		// 		defer res.Body.Close()
+		// 		body, _ := io.ReadAll(res.Body)
+
+		// 		var weather WeatherData
+
+		// 		if err := json.Unmarshal([]byte(body), &weather); err != nil {
+		// 			log.Fatal(err)
+		// 		}
+
+		// 		weatherMessage := fmt.Sprintf("In your area, the temperature outside is **%.0f F** and it feels like **%.0f F**.\nCurrently you are experiencing **%v**", weather.Data.Values.Temperature, weather.Data.Values.TemperatureApparent, weatherCodes[weather.Data.Values.WeatherCode])
+
+		// 		if weather.Data.Values.WeatherCode <= 1001 {
+		// 			weatherMessage = weatherMessage + " conditions."
+		// 		}
+
+		// 		session.ChannelMessageSend(message.ChannelID, weatherMessage)
+		// 	}
+
+		// }
 	})
 
 	sess.AddHandler(welcome)
